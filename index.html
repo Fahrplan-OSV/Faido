@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bahnhof Faido – Abfahrten</title>
+  <link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-color: #00205B;
+      color: white;
+      font-family: 'Saira Condensed', sans-serif;
+      margin: 0;
+      padding: 1rem;
+    }
+    h1 {
+      text-align: center;
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    .clock {
+      text-align: center;
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 1.3rem;
+    }
+    th, td {
+      padding: 0.75rem;
+      text-align: left;
+    }
+    th {
+      background-color: #004494;
+    }
+    tr:nth-child(even) {
+      background-color: #001C45;
+    }
+    .zugart {
+      font-weight: bold;
+      width: 6rem;
+    }
+    .ziel {
+      width: 45%;
+    }
+    .hinweis {
+      width: 20%;
+      font-style: italic;
+      color: yellow;
+    }
+  </style>
+</head>
+<body>
+  <h1>Bahnhof Faido – Abfahrten</h1>
+  <div class="clock" id="clock"></div>
+  <table>
+    <thead>
+      <tr>
+        <th>Zeit</th>
+        <th>Zug</th>
+        <th>Nach</th>
+        <th>Hinweis</th>
+      </tr>
+    </thead>
+    <tbody id="departures"></tbody>
+  </table>
+
+  <script>
+    (function() {
+      const bellinzonaHours = Array.from({length: 16}, (_, i) => 6 + i); // 06:50 bis 21:50
+      const airoloHours = Array.from({length: 15}, (_, i) => 6 + i); // 06:10 bis 20:10
+
+      function pad(n) {
+        return n.toString().padStart(2, '0');
+      }
+
+      function formatTime(h, m, s) {
+        return `${pad(h)}:${pad(m)}:${pad(s)}`;
+      }
+
+      function extractDelayMinutes(notice) {
+        const match = notice.match(/\+\s?(\d{1,2})[‘']/);
+        return match ? parseInt(match[1], 10) : 0;
+      }
+
+      function getDepartures() {
+        const departures = [];
+        const current = new Date();
+
+        for (let i = -10; i < 180; i++) {
+          const d = new Date(current.getTime() + i * 60_000);
+          const h = d.getHours();
+          const m = d.getMinutes();
+
+          if (bellinzonaHours.includes(h) && m === 50) {
+            departures.push({
+              time: `${pad(h)}:${pad(m)}`,
+              hour: h,
+              minute: m,
+              line: 'RE1',
+              destination: 'Bellinzona',
+              notice: ''
+            });
+          }
+
+          if (airoloHours.includes(h) && m === 10) {
+            departures.push({
+              time: `${pad(h)}:${pad(m)}`,
+              hour: h,
+              minute: m,
+              line: 'RE1',
+              destination: 'Airolo',
+              notice: ''
+            });
+          }
+        }
+
+        const now = new Date();
+        return departures.filter(dep => {
+          const delay = extractDelayMinutes(dep.notice);
+          const plannedTime = new Date(now);
+          plannedTime.setHours(dep.hour, dep.minute, 0, 0);
+          plannedTime.setMinutes(plannedTime.getMinutes() + delay);
+          return plannedTime.getTime() + 30_000 >= now.getTime();
+        }).slice(0, 8);
+      }
+
+      function updateClock() {
+        const now = new Date();
+        document.getElementById('clock').textContent = `Aktuelle Uhrzeit: ${formatTime(now.getHours(), now.getMinutes(), now.getSeconds())}`;
+      }
+
+      function renderDepartures() {
+        const tbody = document.getElementById('departures');
+        tbody.innerHTML = '';
+        const departures = getDepartures();
+
+        for (const d of departures) {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${d.time}</td>
+            <td class="zugart">${d.line}</td>
+            <td class="ziel">${d.destination}</td>
+            <td class="hinweis">${d.notice}</td>
+          `;
+          tbody.appendChild(tr);
+        }
+      }
+
+      function refresh() {
+        updateClock();
+        renderDepartures();
+      }
+
+      refresh();
+      setInterval(refresh, 1000);
+    })();
+  </script>
+</body>
+</html>
