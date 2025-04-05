@@ -69,15 +69,19 @@
 
   <script>
     (function() {
-      const bellinzonaHours = Array.from({length: 16}, (_, i) => 6 + i); // 06:50 bis 21:50
-      const airoloHours = Array.from({length: 15}, (_, i) => 6 + i); // 06:10 bis 20:10
+      const bellinzonaHours = Array.from({length: 16}, (_, i) => 6 + i); // 06–21
+      const airoloHours = Array.from({length: 15}, (_, i) => 6 + i); // 06–20
 
       function pad(n) {
         return n.toString().padStart(2, '0');
       }
 
       function formatTime(h, m, s) {
-        return `${pad(h)}:${pad(m)}:${pad(s)}`;
+        if (!s && s !== 0) {
+          return `${pad(h)}:${pad(m)}`;
+        } else {
+          return `${pad(h)}:${pad(m)}:${pad(s)}`;
+        }
       }
 
       function extractDelayMinutes(notice) {
@@ -96,22 +100,22 @@
 
           if (bellinzonaHours.includes(h) && m === 50) {
             departures.push({
-              time: `${pad(h)}:${pad(m)}`,
+              time: formatTime(h, m),
               hour: h,
               minute: m,
               line: 'RE1',
-              destination: 'Bellinzona',
+              destination: 'Lavorgo – Bodio TI – Biasca – Bellinzona',
               notice: ''
             });
           }
 
           if (airoloHours.includes(h) && m === 10) {
             departures.push({
-              time: `${pad(h)}:${pad(m)}`,
+              time: formatTime(h, m),
               hour: h,
               minute: m,
               line: 'RE1',
-              destination: 'Airolo',
+              destination: 'Ambrì-Piotta – Airolo',
               notice: ''
             });
           }
